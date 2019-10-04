@@ -23,7 +23,7 @@ class BoundedMixin:
 
 
 def __getattr__(name):
-    global ProcessPoolExecutor, ThreadPoolExecutor
+    global BoundedProcessPool, BoundedThreadPool
 
     if name == 'BoundedProcessPool':
         from concurrent.futures import ProcessPoolExecutor
