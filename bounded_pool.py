@@ -18,7 +18,7 @@ class BoundedMixin:
             self._semaphore.release()
             raise
         else:
-            future.add_done_callback(self._semaphore.release)
+            future.add_done_callback(lambda _: self._semaphore.release())
             return future
 
 
