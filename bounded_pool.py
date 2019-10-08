@@ -1,6 +1,8 @@
 import multiprocessing
 import threading
 
+from pebble import ProcessPool, ThreadPool
+
 
 __all__ = (
     'BoundedProcessPool',
@@ -10,10 +12,10 @@ __all__ = (
 
 class BoundedMixin:
 
-    def submit(self, func, *args, **kwgs):
+    def schedule(self, *args, **kwgs):
         self._semaphore.acquire()
         try:
-            future = super().submit(func, *args, **kwgs)
+            future = super().schedule(*args, **kwgs)
         except:
             self._semaphore.release()
             raise
@@ -22,29 +24,15 @@ class BoundedMixin:
             return future
 
 
-def __getattr__(name):
-    global BoundedProcessPool, BoundedThreadPool
+class BoundedProcessPool(BoundedMixin, ProcessPool):
 
-    if name == 'BoundedProcessPool':
-        from concurrent.futures import ProcessPoolExecutor
+    def __init__(self, *args, **kwgs):
+        super().__init__(*args, **kwgs)
+        self._semaphore = multiprocessing.BoundedSemaphore(self._context.workers)
 
-        class BoundedProcessPool(BoundedMixin, ProcessPoolExecutor):
 
-            def __init__(self, *args, **kwgs):
-                super().__init__(*args, **kwgs)
-                self._semaphore = multiprocessing.BoundedSemaphore(self._max_workers)
+class BoundedThreadPool(BoundedMixin, ThreadPool):
 
-        return BoundedProcessPool
-
-    if name == 'BoundedThreadPool':
-        from concurrent.futures.thread import ThreadPoolExecutor
-
-        class BoundedThreadPool(BoundedMixin, ThreadPoolExecutor):
-
-            def __init__(self, *args, **kwgs):
-                super().__init__(*args, **kwgs)
-                self._semaphore = threading.BoundedSemaphore(self._max_workers)
-        
-        return BoundedThreadPool
-
-    raise AttributeError(f"module {__name__} has no attribute {name}")
+    def __init__(self, *args, **kwgs):
+        super().__init__(*args, **kwgs)
+        self._semaphore = threading.BoundedSemaphore(self._context.workers)
