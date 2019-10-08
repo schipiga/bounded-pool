@@ -9,4 +9,5 @@ setup(
     author='Sergei Chipiga <chipiga86@gmail.com>',
     author_email='chipiga86@gmail.com',
     py_modules=['bounded_pool'],
+    install_requires=['Pebble==4.4.0'],
 )
