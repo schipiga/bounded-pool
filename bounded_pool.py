@@ -1,6 +1,8 @@
 import multiprocessing
 import threading
+import weakref
 
+from multilock import MultiRLock
 from pebble import ProcessPool, ThreadPool
 
 
@@ -12,15 +14,33 @@ __all__ = (
 
 class BoundedMixin:
 
+    def __init__(self, *args, **kwgs):
+        super().__init__(*args, **kwgs)
+        self._lock = MultiRLock()
+        self._futures = weakref.WeakSet()
+
+    def acquire(self):
+        return self._semaphore.acquire()
+
+    def release(self, future):
+        with self._lock(future):
+            if future not in self._futures:
+                return False
+            self._futures.remove(future)
+            self._semaphore.release()
+            return True
+
     def schedule(self, *args, **kwgs):
-        self._semaphore.acquire()
+        self.acquire()
         try:
             future = super().schedule(*args, **kwgs)
         except:
             self._semaphore.release()
             raise
         else:
-            future.add_done_callback(lambda _: self._semaphore.release())
+            self._futures.add(future)
+            self._lock.add(future)
+            future.add_done_callback(lambda future: self.release(future))
             return future
 
 
