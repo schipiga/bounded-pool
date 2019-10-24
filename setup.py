@@ -10,6 +10,6 @@ setup(
     author_email='chipiga86@gmail.com',
     py_modules=['bounded_pool'],
     install_requires=[
-        'Pebble==4.4.0',
+        'Pebble @ git+https://github.com/schipiga/pebble@v4.4.1',
         'multilock @ git+https://github.com/schipiga/multilock@v0.1'],
 )
